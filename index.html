@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thailand Travel Map - ท่องเที่ยวไทย</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --thai: #d4281c;
+            --green: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Padauk', 'Noto Sans Thai', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* ============== HEADER ============== */
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideInDown 0.6s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(212, 40, 28, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        .lang-btn {
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            color: white;
+            border-color: #d4281c;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #27ae60;
+        }
+
+        .status-dot.offline {
+            background: #e74c3c;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ============== MAIN LAYOUT ============== */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* ============== MAP SECTION ============== */
+        .map-section {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        #map {
+            width: 100%;
+            height: 600px;
+            z-index: 1;
+        }
+
+        /* Map controls */
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-control-btn {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-control-btn:hover {
+            background: #f0f0f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Search box */
+        .map-search {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 500;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            gap: 8px;
+        }
+
+        .map-search input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .map-search-results {
+            position: absolute;
+            top: 50px;
+            left: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 500;
+            display: none;
+        }
+
+        .map-search-results.show {
+            display: block;
+        }
+
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .search-result-item:hover {
+            background: #f9f9f9;
+            padding-left: 16px;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        /* ============== SIDEBAR ============== */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: fit-content;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .sidebar-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Location List */
+        .location-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .location-item {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid #d4281c;
+        }
+
+        .location-item:hover {
+            background: #f0f0f0;
+            transform: translateX(4px);
+        }
+
+        .location-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .location-category {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        /* Filter tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .filter-tab {
+            padding: 6px 10px;
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            color: white;
+            border-color: #d4281c;
+        }
+
+        /* ============== PLACE DETAIL MODAL ============== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .place-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .place-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #d4281c;
+        }
+
+        .info-label {
+            font-size: 10px;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .place-description {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .place-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .feature-tag {
+            padding: 8px 12px;
+            background: linear-gradient(135deg, rgba(212, 40, 28, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #d4281c;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            color: white;
+        }
+
+        .action-btn.secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        /* ============== BOTTOM PANEL ============== */
+        .bottom-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: -10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .panel-header {
+            font-size: 14px;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .place-card {
+            background: #f9f9f9;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .place-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #d4281c;
+        }
+
+        .place-card-image {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #d4281c 0%, #667eea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .place-card-content {
+            padding: 12px;
+        }
+
+        .place-card-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .place-card-category {
+            font-size: 10px;
+            color: #d4281c;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .place-card-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #f39c12;
+        }
+
+        /* ============== ALERTS ============== */
+        .alert {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert.success {
+            border-left: 4px solid #27ae60;
+        }
+
+        .alert.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .alert.info {
+            border-left: 4px solid #3498db;
+        }
+
+        /* ============== RESPONSIVE ============== */
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            #map {
+                height: 400px;
+            }
+
+            .places-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: start;
+            }
+
+            .map-search {
+                width: calc(100% - 40px);
+            }
+
+            #map {
+                height: 300px;
+            }
+
+            .places-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px;
+            }
+
+            .main-layout {
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            #map {
+                height: 250px;
+            }
+
+            .places-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d4281c;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+
+        /* Language specific fonts */
+        .myanmar-text {
+            font-family: 'Padauk', 'Myanmar3', 'Noto Sans Myanmar', sans-serif;
+        }
+
+        .thai-text {
+            font-family: 'Noto Sans Thai', 'Cordia New', 'Leelawadee UI', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1 id="appTitle">🗺️ Thailand Travel Map</h1>
+                <p id="appSubtitle">Explore Amazing Places</p>
+            </div>
+            <div class="header-controls">
+                <div class="status-indicator">
+                    <div class="status-dot online" id="statusDot"></div>
+                    <span id="statusText">Online</span>
+                </div>
+                <button class="lang-btn active" onclick="setLanguage('en')" id="enBtn">EN</button>
+                <button class="lang-btn" onclick="setLanguage('my')" id="myBtn">MY</button>
+                <button class="lang-btn" onclick="setLanguage('th')" id="thBtn">TH</button>
+                <button class="btn btn-primary" onclick="downloadOfflineMap()">
+                    <i class="fas fa-download"></i>
+                    <span id="downloadBtn">Offline</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-layout">
+            <!-- Map Section -->
+            <div class="map-section">
+                <!-- Search Box -->
+                <div class="map-search">
+                    <i class="fas fa-search" style="color: #888;"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search places..." 
+                        oninput="searchPlaces()"
+                    >
+                </div>
+
+                <!-- Search Results -->
+                <div class="map-search-results" id="searchResults"></div>
+
+                <!-- Map -->
+                <div id="map"></div>
+
+                <!-- Map Controls -->
+                <div class="map-controls">
+                    <button class="map-control-btn" onclick="zoomIn()" title="Zoom In">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="map-control-btn" onclick="zoomOut()" title="Zoom Out">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="map-control-btn" onclick="centerMap()" title="Center">
+                        <i class="fas fa-location-arrow"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Nearby Places -->
+                <div class="sidebar-panel">
+                    <div class="panel-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="nearbyTitle">Nearby Places</span>
+                    </div>
+                    <div class="filter-tabs">
+                        <div class="filter-tab active" onclick="filterByCategory('all')">All</div>
+                        <div class="filter-tab" onclick="filterByCategory('temple')">
+                            <span id="templeFilter">Temple</span>
+                        </div>
+                        <div class="filter-tab" onclick="filterByCategory('beach')">
+                            <span id="beachFilter">Beach</span>
+                        </div>
+                        <div class="filter-tab" onclick="filterByCategory('restaurant')">
+                            <span id="restaurantFilter">Food</span>
+                        </div>
+                    </div>
+                    <div class="location-list" id="locationList"></div>
+                </div>
+
+                <!-- Trip Info -->
+                <div class="sidebar-panel">
+                    <div class="panel-title">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="infoTitle">Trip Info</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #999; margin-bottom: 4px; text-transform: uppercase; font-weight: 700;">
+                                <span id="visitedLabel">Visited</span>
+                            </div>
+                            <div style="font-size: 16px; font-weight: 800; color: #d4281c;" id="visitedCount">0</div>
+                        </div>
+                        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: #999; margin-bottom: 4px; text-transform: uppercase; font-weight: 700;">
+                                <span id="favoriteLabel">Favorites</span>
+                            </div>
+                            <div style="font-size: 16px; font-weight: 800; color: #667eea;" id="favoriteCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="sidebar-panel">
+                    <div class="panel-title">
+                        <i class="fas fa-link"></i>
+                        <span id="linksTitle">Quick Links</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="openTripPlanner()">
+                            <i class="fas fa-calendar"></i>
+                            <span id="planBtn">Plan Trip</span>
+                        </button>
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="openMyTrips()">
+                            <i class="fas fa-suitcase"></i>
+                            <span id="myTripsBtn">My Trips</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel - Popular Places -->
+        <div class="bottom-panel">
+            <div class="panel-header">
+                <i class="fas fa-star"></i>
+                <span id="popularTitle">Popular Travel Places</span>
+            </div>
+            <div class="places-grid" id="placesGrid"></div>
+        </div>
+    </div>
+
+    <!-- Place Detail Modal -->
+    <div class="modal" id="placeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="placeModalTitle">Place Details</div>
+                <button class="modal-close" onclick="closePlaceModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="placeModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Trip Planner Modal -->
+    <div class="modal" id="tripPlannerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="tripTitle">Plan Your Trip</div>
+                <button class="modal-close" onclick="closeTripPlanner()">&times;</button>
+            </div>
+            <div class="modal-body" id="tripPlannerBody"></div>
+        </div>
+    </div>
+
+    <!-- My Trips Modal -->
+    <div class="modal" id="myTripsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="myTripsTitle">My Trips</div>
+                <button class="modal-close" onclick="closeMyTrips()">&times;</button>
+            </div>
+            <div class="modal-body" id="myTripsBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============== TRANSLATIONS ==============
+        const translations = {
+            en: {
+                appTitle: '🗺️ Thailand Travel Map',
+                appSubtitle: 'Explore Amazing Places',
+                downloadBtn: 'Offline',
+                nearbyTitle: 'Nearby Places',
+                templeFilter: 'Temple',
+                beachFilter: 'Beach',
+                restaurantFilter: 'Food',
+                infoTitle: 'Trip Info',
+                visitedLabel: 'Visited',
+                favoriteLabel: 'Favorites',
+                linksTitle: 'Quick Links',
+                planBtn: 'Plan Trip',
+                myTripsBtn: 'My Trips',
+                popularTitle: 'Popular Travel Places',
+                placeModalTitle: 'Place Details',
+                tripTitle: 'Plan Your Trip',
+                myTripsTitle: 'My Trips',
+                visitBtn: 'Mark as Visited',
+                favoriteBtn: 'Add to Favorites',
+                directionsBtn: 'Get Directions',
+                callBtn: 'Call',
+                offlineReady: 'Offline map ready!',
+                addedFavorite: 'Added to favorites!',
+                markedVisited: 'Marked as visited!',
+                tripSaved: 'Trip saved!',
+                statusOnline: 'Online',
+                statusOffline: 'Offline',
+                noTrips: 'No trips yet'
+            },
+            my: {
+                appTitle: '🗺️ ထိုင်းခရီးသွားမြေပုံ',
+                appSubtitle: 'အံ့သြတ်လောက်တဲ့နေရာများရှာဖွေ',
+                downloadBtn: 'အင်တာနက်မ없ည်',
+                nearbyTitle: 'အနီးအနားရှိနေရာများ',
+                templeFilter: 'ကျောင်း',
+                beachFilter: 'ကန်',
+                restaurantFilter: 'စားသုံးရန်',
+                infoTitle: 'ခရီးသွားအချက်အလက်',
+                visitedLabel: 'လည်ပတ်ထားပြီး',
+                favoriteLabel: 'နှစ်သက်ထားသော',
+                linksTitle: 'လျင်မြန်သောလင်ခ်များ',
+                planBtn: 'ခရီးစဉ်ပြောင်းလည်ပ',
+                myTripsBtn: 'ကျွန်ုပ်၏ခရီးများ',
+                popularTitle: 'জনဆန်သောခရီးသွားနေရာများ',
+                placeModalTitle: 'နေရာအသေးစိတ်',
+                tripTitle: 'သင့်ခရီးစဉ်ကိုအစီအစဉ်ခတ်ပါ',
+                myTripsTitle: 'ကျွန်ုပ်၏ခရီးများ',
+                visitBtn: 'လည်ပတ်ခြင်းအဖြစ်မှတ်တမ်းတင်ပါ',
+                favoriteBtn: 'နှစ်သက်ထားသည့်အရာတွင်ထည့်သွင်းပါ',
+                directionsBtn: 'လမ်းညွှန်ချက်များယူပါ',
+                callBtn: 'ခေါ်ဆိုပါ',
+                offlineReady: 'အင်တာနက်မဲ့မြေပုံသည်အဆင်သင့်ဖြစ်ပါပြီ!',
+                addedFavorite: 'နှစ်သက်ထားသည့်အရာတွင်ထည့်သွင်းထားပြီး!',
+                markedVisited: 'လည်ပတ်ခြင်းအဖြစ်မှတ်တမ်းတင်ထားပြီး!',
+                tripSaved: 'ခရီးစဉ်သိမ်းဆည်းထားပြီး!',
+                statusOnline: 'အွန်လိုင်း',
+                statusOffline: 'အင်တာနက်မဲ့',
+                noTrips: 'ခရီးမရှိသေးပါ'
+            },
+            th: {
+                appTitle: '🗺️ แผนที่ท่องเที่ยวไทย',
+                appSubtitle: 'สำรวจสถานที่ยอดเยี่ยม',
+                downloadBtn: 'ออฟไลน์',
+                nearbyTitle: 'สถานที่ใกล้เคียง',
+                templeFilter: 'วัด',
+                beachFilter: 'ชายหาด',
+                restaurantFilter: 'อาหาร',
+                infoTitle: 'ข้อมูลการท่องเที่ยว',
+                visitedLabel: 'เยี่ยมชมแล้ว',
+                favoriteLabel: 'รายการโปรด',
+                linksTitle: 'ลิงก์ด่วน',
+                planBtn: 'วางแผนการท่องเที่ยว',
+                myTripsBtn: 'การท่องเที่ยวของฉัน',
+                popularTitle: 'สถานที่ท่องเที่ยวยอดนิยม',
+                placeModalTitle: 'รายละเอียดสถานที่',
+                tripTitle: 'วางแผนการท่องเที่ยว',
+                myTripsTitle: 'การท่องเที่ยวของฉัน',
+                visitBtn: 'ทำเครื่องหมายว่าเยี่ยมชม',
+                favoriteBtn: 'เพิ่มไปยังรายการโปรด',
+                directionsBtn: 'รับเส้นทาง',
+                callBtn: 'โทรหา',
+                offlineReady: 'แผนที่ออฟไลน์พร้อมใช้งาน!',
+                addedFavorite: 'เพิ่มไปยังรายการโปรดแล้ว!',
+                markedVisited: 'ทำเครื่องหมายว่าเยี่ยมชมแล้ว!',
+                tripSaved: 'บันทึกการท่องเที่ยวแล้ว!',
+                statusOnline: 'ออนไลน์',
+                statusOffline: 'ออฟไลน์',
+                noTrips: 'ยังไม่มีการท่องเที่ยว'
+            }
+        };
+
+        // ============== PLACES DATA ==============
+        const PLACES = [
+            {
+                id: 1,
+                name: 'Grand Palace',
+                nameMyanmar: 'ယုံမင်းတည်ဆောက်ရှိသည့် ကျောင်းအုပ်',
+                nameThai: 'พระบรมมหาราชวัง',
+                category: 'temple',
+                emoji: '🏰',
+                location: { lat: 13.6528, lng: 100.4917 },
+                address: '142 Sanam Luang, Bangkok',
+                phone: '+66 2 222 8047',
+                description: 'The official residence of Thai kings. It is the most sacred place in Thailand.',
+                rating: 4.8,
+                reviews: 2500,
+                openHours: '8:30 AM - 3:30 PM',
+                entryFee: '500 THB',
+                features: ['Photography', 'Guides Available', 'Wheelchair Accessible', 'Restaurant'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 2,
+                name: 'Wat Pho',
+                nameMyanmar: 'ဝါတ်ဖို',
+                nameThai: 'วัดโพธิ์',
+                category: 'temple',
+                emoji: '🏯',
+                location: { lat: 13.6461, lng: 100.4944 },
+                address: '2 Sanam Chai Rd, Bangkok',
+                phone: '+66 2 221 2974',
+                description: 'Home to the giant reclining Buddha. One of Bangkoks oldest temples.',
+                rating: 4.7,
+                reviews: 3000,
+                openHours: '8:00 AM - 6:30 PM',
+                entryFee: '100 THB',
+                features: ['Massage', 'Photography', 'Guides Available'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 3,
+                name: 'Phuket Beach',
+                nameMyammer: 'ဖုကက်ကန်',
+                nameThai: 'หาดภูเก็ต',
+                category: 'beach',
+                emoji: '🏖️',
+                location: { lat: 8.0863, lng: 98.2743 },
+                address: 'Phuket Province',
+                phone: '+66 76 212 213',
+                description: 'Popular beach with crystal clear water and white sand.',
+                rating: 4.6,
+                reviews: 4000,
+                openHours: '24/7',
+                entryFee: 'Free',
+                features: ['Swimming', 'Water Sports', 'Beach Bars', 'Restaurants'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 4,
+                name: 'Phi Phi Islands',
+                nameMyammer: 'ဖီ ဖီ နေရာများ',
+                nameThai: 'เกาะพีพี',
+                category: 'beach',
+                emoji: '🏝️',
+                location: { lat: 7.7525, lng: 98.7758 },
+                address: 'Krabi Province',
+                phone: '+66 75 601 228',
+                description: 'Stunning twin islands with beautiful beaches and marine life.',
+                rating: 4.9,
+                reviews: 5000,
+                openHours: '24/7',
+                entryFee: 'Free',
+                features: ['Snorkeling', 'Diving', 'Boat Tours', 'Island Hopping'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 5,
+                name: 'Chiang Mai Night Bazaar',
+                nameMyammer: 'ချင်းမိုင်းည့ငါးခ',
+                nameThai: 'ตลาดคืนเชียงใหม่',
+                category: 'restaurant',
+                emoji: '🛍️',
+                location: { lat: 18.7883, lng: 98.9853 },
+                address: 'Chiang Mai',
+                phone: '+66 53 340 188',
+                description: 'Famous night market with local food, crafts, and souvenirs.',
+                rating: 4.5,
+                reviews: 2000,
+                openHours: '6:00 PM - 11:00 PM',
+                entryFee: 'Free',
+                features: ['Local Food', 'Shopping', 'Entertainment', 'Affordable'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 6,
+                name: 'Floating Markets',
+                nameMyammer: 'ဖန်ထီးကျွန်းများ',
+                nameThai: 'ตลาดน้ำ',
+                category: 'restaurant',
+                emoji: '🚣',
+                location: { lat: 13.5897, lng: 100.3582 },
+                address: 'Bangkok',
+                phone: '+66 2 418 3568',
+                description: 'Traditional Thai floating markets with boats selling food and goods.',
+                rating: 4.6,
+                reviews: 3500,
+                openHours: '7:00 AM - 11:00 AM',
+                entryFee: 'Free',
+                features: ['Local Food', 'Boat Rides', 'Shopping', 'Photography'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 7,
+                name: 'Krabi Cliffs',
+                nameMyammer: 'ကြားဘီ ချောင်း',
+                nameThai: 'หน้าผาไข่',
+                category: 'beach',
+                emoji: '⛰️',
+                location: { lat: 8.1863, lng: 98.9158 },
+                address: 'Krabi Province',
+                phone: '+66 75 620 740',
+                description: 'Dramatic limestone cliffs rising from emerald waters.',
+                rating: 4.8,
+                reviews: 2800,
+                openHours: '24/7',
+                entryFee: 'Free',
+                features: ['Rock Climbing', 'Photography', 'Scenic Views', 'Beaches'],
+                visited: false,
+                favorite: false
+            },
+            {
+                id: 8,
+                name: 'Bangkok Street Food',
+                nameMyammer: 'ဘန်ကောက်လမ်းဘက်ထီးကျွန်း',
+                nameThai: 'อาหารริมถนน',
+                category: 'restaurant',
+                emoji: '🍜',
+                location: { lat: 13.7563, lng: 100.5018 },
+                address: 'Various Locations, Bangkok',
+                phone: '+66 2 123 4567',
+                description: 'Authentic Thai street food experience with local flavors.',
+                rating: 4.7,
+                reviews: 3200,
+                openHours: '10:00 AM - 10:00 PM',
+                entryFee: 'Free',
+                features: ['Local Food', 'Affordable', 'Photography', 'Cultural'],
+                visited: false,
+                favorite: false
+            }
+        ];
+
+        // ============== STATE ==============
+        let state = {
+            currentLanguage: 'en',
+            map: null,
+            markers: [],
+            isOnline: navigator.onLine,
+            currentFilter: 'all',
+            selectedPlaces: new Set(),
+            favorites: [],
+            visited: [],
+            trips: []
+        };
+
+        // ============== INITIALIZATION ==============
+        function init() {
+            loadFromStorage();
+            updateUI();
+            initMap();
+            renderPlaces();
+            updateStatusIndicator();
+            window.addEventListener('online', () => {
+                state.isOnline = true;
+                updateStatusIndicator();
+            });
+            window.addEventListener('offline', () => {
+                state.isOnline = false;
+                updateStatusIndicator();
+            });
+        }
+
+        // ============== MAP INITIALIZATION ==============
+        function initMap() {
+            state.map = L.map('map').setView([13.7563, 100.4945], 6);
+
+            // Use offline tiles if available
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(state.map);
+
+            // Add markers for all places
+            PLACES.forEach(place => {
+                const marker = L.marker([place.location.lat, place.location.lng], {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="font-size: 24px;">${place.emoji}</div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 32]
+                    })
+                }).addTo(state.map);
+
+                marker.bindPopup(`
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 16px; margin-bottom: 5px;">${place.emoji}</div>
+                        <div style="font-weight: 700; margin-bottom: 4px;">${getLocalizedName(place)}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 8px;">${place.category.toUpperCase()}</div>
+                        <button class="btn btn-primary btn-sm" onclick="openPlaceDetail(${place.id})" style="width: 100%;">
+                            View Details
+                        </button>
+                    </div>
+                `);
+
+                marker.on('click', () => openPlaceDetail(place.id));
+            });
+        }
+
+        // ============== UI FUNCTIONS ==============
+        function setLanguage(lang) {
+            state.currentLanguage = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(lang + 'Btn').classList.add('active');
+            updateUI();
+            renderPlaces();
+        }
+
+        function t(key) {
+            return translations[state.currentLanguage]?.[key] || key;
+        }
+
+        function getLocalizedName(place) {
+            if (state.currentLanguage === 'my') {
+                return place.nameMyammer || place.name;
+            } else if (state.currentLanguage === 'th') {
+                return place.nameThai || place.name;
+            }
+            return place.name;
+        }
+
+        function updateUI() {
+            document.getElementById('appTitle').textContent = t('appTitle');
+            document.getElementById('appSubtitle').textContent = t('appSubtitle');
+            document.getElementById('downloadBtn').textContent = t('downloadBtn');
+            document.getElementById('nearbyTitle').textContent = t('nearbyTitle');
+            document.getElementById('templeFilter').textContent = t('templeFilter');
+            document.getElementById('beachFilter').textContent = t('beachFilter');
+            document.getElementById('restaurantFilter').textContent = t('restaurantFilter');
+            document.getElementById('infoTitle').textContent = t('infoTitle');
+            document.getElementById('visitedLabel').textContent = t('visitedLabel');
+            document.getElementById('favoriteLabel').textContent = t('favoriteLabel');
+            document.getElementById('linksTitle').textContent = t('linksTitle');
+            document.getElementById('planBtn').textContent = t('planBtn');
+            document.getElementById('myTripsBtn').textContent = t('myTripsBtn');
+            document.getElementById('popularTitle').textContent = t('popularTitle');
+            document.getElementById('visitedCount').textContent = state.visited.length;
+            document.getElementById('favoriteCount').textContent = state.favorites.length;
+            document.querySelector('input[id="searchInput"]').placeholder = t('popularTitle');
+        }
+
+        function updateStatusIndicator() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (state.isOnline) {
+                dot.className = 'status-dot online';
+                text.textContent = t('statusOnline');
+            } else {
+                dot.className = 'status-dot offline';
+                text.textContent = t('statusOffline');
+            }
+        }
+
+        // ============== PLACE FUNCTIONS ==============
+        function renderPlaces() {
+            const filtered = state.currentFilter === 'all' 
+                ? PLACES 
+                : PLACES.filter(p => p.category === state.currentFilter);
+
+            const grid = document.getElementById('placesGrid');
+            grid.innerHTML = filtered.map(place => `
+                <div class="place-card" onclick="openPlaceDetail(${place.id})">
+                    <div class="place-card-image">${place.emoji}</div>
+                    <div class="place-card-content">
+                        <div class="place-card-category">${place.category}</div>
+                        <div class="place-card-name">${getLocalizedName(place)}</div>
+                        <div class="place-card-rating">
+                            <i class="fas fa-star"></i>
+                            <span>${place.rating}</span>
+                            <span style="color: #999;">(${place.reviews})</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            renderLocationList(filtered);
+        }
+
+        function renderLocationList(places) {
+            const list = document.getElementById('locationList');
+            list.innerHTML = places.map(place => `
+                <div class="location-item" onclick="openPlaceDetail(${place.id})">
+                    <div class="location-name">${getLocalizedName(place)}</div>
+                    <div class="location-category">
+                        ${place.emoji} ${place.category} • ⭐ ${place.rating}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPlaceDetail(placeId) {
+            const place = PLACES.find(p => p.id === placeId);
+            if (!place) return;
+
+            const modal = document.getElementById('placeModal');
+            const body = document.getElementById('placeModalBody');
+
+            const features = place.features.map(f => `<div class="feature-tag">${f}</div>`).join('');
+
+            body.innerHTML = `
+                <div class="place-image">${place.emoji}</div>
+                
+                <div class="place-info">
+                    <div class="info-box">
+                        <div class="info-label">Rating</div>
+                        <div class="info-value">⭐ ${place.rating}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Reviews</div>
+                        <div class="info-value">${place.reviews}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Hours</div>
+                        <div class="info-value" style="font-size: 11px;">${place.openHours}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Entry Fee</div>
+                        <div class="info-value">${place.entryFee}</div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 14px; font-weight: 800; margin-bottom: 8px; color: #333;">
+                    ${getLocalizedName(place)}
+                </h3>
+
+                <p class="place-description">${place.description}</p>
+
+                <h3 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: #333; text-transform: uppercase;">
+                    Facilities
+                </h3>
+                <div class="place-features">
+                    ${features}
+                </div>
+
+                <h3 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: #333; text-transform: uppercase;">
+                    Contact
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; font-size: 12px;">
+                    <div><strong>Address:</strong> ${place.address}</div>
+                    <div><strong>Phone:</strong> ${place.phone}</div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="action-btn primary" onclick="addToFavorites(${place.id})">
+                        <i class="fas fa-heart"></i>
+                        ${t('favoriteBtn')}
+                    </button>
+                    <button class="action-btn primary" onclick="markVisited(${place.id})">
+                        <i class="fas fa-check"></i>
+                        ${t('visitBtn')}
+                    </button>
+                    <button class="action-btn secondary" onclick="getDirections(${place.id})">
+                        <i class="fas fa-directions"></i>
+                        ${t('directionsBtn')}
+                    </button>
+                    <button class="action-btn secondary" onclick="callPlace('${place.phone}')">
+                        <i class="fas fa-phone"></i>
+                        ${t('callBtn')}
+                    </button>
+                </div>
+            `;
+
+            modal.classList.add('show');
+        }
+
+        function closePlaceModal() {
+            document.getElementById('placeModal').classList.remove('show');
+        }
+
+        function addToFavorites(placeId) {
+            if (!state.favorites.includes(placeId)) {
+                state.favorites.push(placeId);
+                saveToStorage();
+                document.getElementById('favoriteCount').textContent = state.favorites.length;
+                showAlert(t('addedFavorite'), 'success');
+            }
+        }
+
+        function markVisited(placeId) {
+            if (!state.visited.includes(placeId)) {
+                state.visited.push(placeId);
+                saveToStorage();
+                document.getElementById('visitedCount').textContent = state.visited.length;
+                showAlert(t('markedVisited'), 'success');
+            }
+        }
+
+        function getDirections(placeId) {
+            const place = PLACES.find(p => p.id === placeId);
+            if (place) {
+                const url = `https://www.google.com/maps/search/${place.location.lat},${place.location.lng}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        function callPlace(phone) {
+            window.location.href = `tel:${phone}`;
+        }
+
+        // ============== SEARCH FUNCTIONS ==============
+        function searchPlaces() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const results = document.getElementById('searchResults');
+
+            if (!query) {
+                results.classList.remove('show');
+                return;
+            }
+
+            const filtered = PLACES.filter(place => 
+                getLocalizedName(place).toLowerCase().includes(query) ||
+                place.category.toLowerCase().includes(query) ||
+                place.address.toLowerCase().includes(query)
+            );
+
+            if (filtered.length === 0) {
+                results.classList.remove('show');
+                return;
+            }
+
+            results.innerHTML = filtered.map(place => `
+                <div class="search-result-item" onclick="selectSearchResult(${place.id})">
+                    <div>${place.emoji} ${getLocalizedName(place)}</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 3px;">${place.address}</div>
+                </div>
+            `).join('');
+
+            results.classList.add('show');
+        }
+
+        function selectSearchResult(placeId) {
+            const place = PLACES.find(p => p.id === placeId);
+            if (place && state.map) {
+                state.map.setView([place.location.lat, place.location.lng], 14);
+                openPlaceDetail(placeId);
+                document.getElementById('searchResults').classList.remove('show');
+                document.getElementById('searchInput').value = '';
+            }
+        }
+
+        // ============== FILTER FUNCTIONS ==============
+        function filterByCategory(category) {
+            state.currentFilter = category;
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            renderPlaces();
+        }
+
+        // ============== MAP CONTROLS ==============
+        function zoomIn() {
+            state.map.zoomIn();
+        }
+
+        function zoomOut() {
+            state.map.zoomOut();
+        }
+
+        function centerMap() {
+            state.map.setView([13.7563, 100.4945], 6);
+        }
+
+        // ============== TRIP FUNCTIONS ==============
+        function openTripPlanner() {
+            const modal = document.getElementById('tripPlannerModal');
+            const body = document.getElementById('tripPlannerBody');
+
+            body.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px;">
+                            Trip Name
+                        </label>
+                        <input type="text" id="tripName" placeholder="Enter trip name" 
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px;">
+                                Start Date
+                            </label>
+                            <input type="date" id="startDate" 
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px;">
+                                End Date
+                            </label>
+                            <input type="date" id="endDate" 
+                                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px;">
+                            Budget (THB)
+                        </label>
+                        <input type="number" id="budget" placeholder="Enter budget" 
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px; font-size: 12px;">
+                            Select Places
+                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            ${PLACES.map(place => `
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+                                    <input type="checkbox" value="${place.id}" class="trip-place">
+                                    ${getLocalizedName(place)}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="saveTrip()">
+                        <i class="fas fa-save"></i> Save Trip
+                    </button>
+                </div>
+            `;
+
+            modal.classList.add('show');
+        }
+
+        function closeTripPlanner() {
+            document.getElementById('tripPlannerModal').classList.remove('show');
+        }
+
+        function saveTrip() {
+            const name = document.getElementById('tripName').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const budget = document.getElementById('budget').value;
+            const selectedPlaces = Array.from(document.querySelectorAll('.trip-place:checked')).map(cb => parseInt(cb.value));
+
+            if (!name || !startDate || !endDate || selectedPlaces.length === 0) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+
+            const trip = {
+                id: Date.now(),
+                name: name,
+                startDate: startDate,
+                endDate: endDate,
+                budget: budget,
+                places: selectedPlaces,
+                createdDate: new Date().toLocaleDateString()
+            };
+
+            state.trips.push(trip);
+            saveToStorage();
+            showAlert(t('tripSaved'), 'success');
+            closeTripPlanner();
+        }
+
+        function openMyTrips() {
+            const modal = document.getElementById('myTripsModal');
+            const body = document.getElementById('myTripsBody');
+
+            if (state.trips.length === 0) {
+                body.innerHTML = `<div style="text-align: center; padding: 40px; color: #999;">
+                    ${t('noTrips')}
+                </div>`;
+            } else {
+                body.innerHTML = state.trips.map(trip => `
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #d4281c;">
+                        <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px;">${trip.name}</div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 6px;">
+                            📅 ${trip.startDate} to ${trip.endDate}
+                        </div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 6px;">
+                            💰 Budget: ${trip.budget} THB
+                        </div>
+                        <div style="font-size: 11px; color: #999;">
+                            Places: ${trip.places.length}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeMyTrips() {
+            document.getElementById('myTripsModal').classList.remove('show');
+        }
+
+        // ============== OFFLINE FUNCTIONS ==============
+        function downloadOfflineMap() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').then(() => {
+                    showAlert(t('offlineReady'), 'success');
+                }).catch(() => {
+                    showAlert('Service Worker registration failed', 'error');
+                });
+            } else {
+                showAlert('Offline mode not supported', 'error');
+            }
+        }
+
+        // ============== STORAGE ==============
+        function saveToStorage() {
+            const data = {
+                favorites: state.favorites,
+                visited: state.visited,
+                trips: state.trips,
+                language: state.currentLanguage
+            };
+            localStorage.setItem('thaiMapState', JSON.stringify(data));
+        }
+
+        function loadFromStorage() {
+            const stored = localStorage.getItem('thaiMapState');
+            if (stored) {
+                const data = JSON.parse(stored);
+                state.favorites = data.favorites || [];
+                state.visited = data.visited || [];
+                state.trips = data.trips || [];
+                state.currentLanguage = data.language || 'en';
+            }
+        }
+
+        // ============== ALERTS ==============
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `
+                <span>${message}</span>
+            `;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+        }
+
+        // ============== CLOSE MODALS ON OUTSIDE CLICK ==============
+        window.addEventListener('click', (e) => {
+            const modals = [
+                document.getElementById('placeModal'),
+                document.getElementById('tripPlannerModal'),
+                document.getElementById('myTripsModal')
+            ];
+            modals.forEach(modal => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+
+        // ============== INITIALIZATION ==============
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
